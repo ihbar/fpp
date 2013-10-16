@@ -9,11 +9,9 @@ if ( isset($_POST['date']) && !empty($_POST['date']) )
 error_log("Setting date to ".$_POST['date'].".");
 //set the date
 exec("sudo date +%Y/%m/%d -s \"".$_POST['date']."\"", $output, $return_val);
-if (!(isset($_POST['time']) && !empty($_POST['time'])))
-{
-  exec("sudo hwclock -w", $output, $return_val);
-}
-
+unset($output);
+//TODO: check return
+exec("sudo hwclock --systohc", $output, $return_val);
 unset($output);
 //TODO: check return
 }
@@ -24,7 +22,9 @@ if ( isset($_POST['time']) && !empty($_POST['time']) )
 error_log("Setting time to ".$_POST['time'].".");
 //set the time
 exec("sudo date +%k:%M -s \"".$_POST['time']."\"", $output, $return_val);
-exec("sudo hwclock -w", $output, $return_val);
+unset($output);
+//TODO: check return
+exec("sudo hwclock --systohc", $output, $return_val);
 unset($output);
 //TODO: check return
 }
