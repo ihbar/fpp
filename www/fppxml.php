@@ -29,6 +29,7 @@ $command_array = Array(
 	"setPlayListFirstLast" => 'SetPlayListFirstLast',
 	"addPlayList" => 'AddPlaylist',
 	"getUniverseReceivedBytes" => 'GetUniverseReceivedBytes',
+	"getCurrentTime" => 'GetCurrentTime',
 	"sort" => 'PlaylistEntryPositionChanged',
 	"savePlaylist" => 'SavePlaylist',
 	"deletePlaylist" => 'DeletePlaylist',
@@ -468,6 +469,47 @@ function DeleteEvent()
 	unlink($eventDirectory . $filename);
 
 	EchoStatusXML('Success');
+}
+
+function GetCurrentTime()
+{
+	$date = getdate();
+
+	$doc = new DomDocument('1.0');
+	$root = $doc->createElement('time');
+	$root = $doc->appendChild($root);
+
+	$temp = $doc->createElement('year');
+	$temp = $root->appendChild($temp);
+	$value = $doc->createTextNode($date['year']);
+	$value = $temp->appendChild($value);
+
+	$temp = $doc->createElement('mon');
+	$temp = $root->appendChild($temp);
+	$value = $doc->createTextNode($date['mon']);
+	$value = $temp->appendChild($value);
+
+	$temp = $doc->createElement('mday');
+	$temp = $root->appendChild($temp);
+	$value = $doc->createTextNode($date['mday']);
+	$value = $temp->appendChild($value);
+
+	$temp = $doc->createElement('hours');
+	$temp = $root->appendChild($temp);
+	$value = $doc->createTextNode($date['hours']);
+	$value = $temp->appendChild($value);
+
+	$temp = $doc->createElement('minutes');
+	$temp = $root->appendChild($temp);
+	$value = $doc->createTextNode($date['minutes']);
+	$value = $temp->appendChild($value);
+
+	$temp = $doc->createElement('seconds');
+	$temp = $root->appendChild($temp);
+	$value = $doc->createTextNode($date['seconds']);
+	$value = $temp->appendChild($value);
+
+	echo $doc->saveHTML();
 }
 
 function GetUniverseReceivedBytes()

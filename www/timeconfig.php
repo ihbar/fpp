@@ -90,7 +90,7 @@ function print_if_match($one, $two, $print)
 <script type="text/javascript" src="/js/fpp.js"></script>
 <title>Falcon PI Player - FPP</title>
 </head>
-<body>
+<body onLoad="setInterval(updateClocks,1000);">
 <div id="bodyWrapper">
   <?php include 'menu.inc'; ?>
   <br/>
@@ -101,10 +101,17 @@ function print_if_match($one, $two, $print)
 <legend>Time Settings</legend>
       <form name="time_form" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST">
 
+<h4>Your Current Browser Time</h4>
+<div id="current_time"></div>
+
+<h4>FPP's Current Time</h4>
+<div id="fpp_time"></div>
+
 <h4>Manually Set Date/Time</h4>
 
 <p><label for="manual_date">Date:</label>
 <input type="text" name="date" id="manual_date"></input>
+
 (Expected format: YYYY/MM/DD)</p>
 
 <p><label for="manual_time">Time:</label>

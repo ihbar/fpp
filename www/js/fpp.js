@@ -1253,6 +1253,47 @@ function PopulatePlayListEntries(playList,reloadFile,selectedRow)
 			
 			xmlhttp.send();
 	}
+
+	function pad(str, max)
+	{
+		return (str).toString().length < max ? pad("0" + (str).toString(), max) : (str).toString();
+	}
+
+	function updateClocks()
+	{
+	    var now = new Date(), // current date
+	        time = pad(now.getHours(), 2) + ':' + pad(now.getMinutes(), 2) + ':' + pad(now.getSeconds(), 2);
+
+	        // a cleaner way than string concatenation
+	        date = [now.getFullYear(),
+					pad(now.getMonth() + 1, 2),
+					pad(now.getDate(), 2)].join('/');
+
+	    // set the content of the element with the ID time to the formatted string
+	    document.getElementById('current_time').innerHTML = date + " " + time;
+
+		var html='';
+	    var xmlhttp=new XMLHttpRequest();
+		var url = "fppxml.php?command=getCurrentTime";
+		xmlhttp.open("GET",url,true);
+		xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+		xmlhttp.onreadystatechange = function () {
+			if (xmlhttp.readyState == 4 && xmlhttp.status==200)
+			{
+					var xmlDoc=xmlhttp.responseXML;
+					var fpptime = xmlDoc.getElementsByTagName('time')[0];
+					var year = fpptime.childNodes[0].textContent;
+					var mon = pad(fpptime.childNodes[1].textContent, 2);
+					var mday = pad(fpptime.childNodes[2].textContent, 2);
+					var hours = pad(fpptime.childNodes[3].textContent, 2);
+					var minutes = pad(fpptime.childNodes[4].textContent, 2);
+					var seconds = pad(fpptime.childNodes[5].textContent, 2);
+
+					$("#fpp_time").html(year+"/"+mon+"/"+mday+" "+hours+":"+minutes+":"+seconds);
+			}
+		};
+		xmlhttp.send();
+	}
 	
 	function GetUniverseBytesReceived()
 	{	
