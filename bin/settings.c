@@ -155,7 +155,6 @@ printf("Usage: %s [OPTION...]\n"
 "\t-l, --log-file\t\tSet the log file\n"
 "\t-b, --bytes-file\tSet the bytes received file\n"
 "\t-h, --help\t\tThis menu.\n"
-"\t    --mpg123-path\tSet location of mpg123 executable\n"
 "\t    --silence-music\tSet location of silence.mp3 file\n", appname);
 }
 
@@ -698,8 +697,6 @@ int saveSettingsFile(void)
 	snprintf(buffer, 1024, "%s = %s\n", "logFile", getLogFile());
 	bytes += fwrite(buffer, 1, strlen(buffer), fd);
 	snprintf(buffer, 1024, "%s = %s\n", "silenceMusic", getSilenceMusic());
-	bytes += fwrite(buffer, 1, strlen(buffer), fd);
-	snprintf(buffer, 1024, "%s = %s\n", "mpg123Path", getMPG123Path());
 	bytes += fwrite(buffer, 1, strlen(buffer), fd);
 	snprintf(buffer, 1024, "%s = %s\n", "bytesFile", getBytesFile());
 	bytes += fwrite(buffer, 1, strlen(buffer), fd);

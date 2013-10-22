@@ -22,7 +22,6 @@ extern int FPPstatus;
 
 extern PlaylistDetails playlistDetails;
 
-extern struct mpg123_type mpg123;
 extern int MusicPlayerStatus;
 extern MusicStatus musicStatus;
 extern int E131secondsElasped;

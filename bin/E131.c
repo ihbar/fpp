@@ -18,7 +18,6 @@
 #include <math.h>
 
 // external variables
-extern struct mpg123_type mpg123;
 extern PlaylistEntry playList[32];
 extern int MusicPlayerStatus;
 extern MusicStatus musicStatus;
