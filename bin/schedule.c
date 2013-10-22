@@ -248,7 +248,7 @@ void PlayListLoadCheck()
   if (nowWeeklySeconds2 != nowWeeklySeconds)
   {
     nowWeeklySeconds2 = nowWeeklySeconds;
-    //LogWrite("NowSecs = %d CurrStartSecs=%d\n",nowWeeklySeconds,CurrentScheduleStartSecond);
+    LogWrite("NowSecs = %d CurrStartSecs=%d\n",nowWeeklySeconds,CurrentScheduleStartSecond);
     if(nowWeeklySeconds == currentSchedulePlaylist.startWeeklySeconds)
     {
       NextScheduleHasbeenLoaded = 0;
@@ -270,7 +270,7 @@ void PlayListStopCheck()
   if (nowWeeklySeconds2 != nowWeeklySeconds)
   {
     nowWeeklySeconds2 = nowWeeklySeconds;
-    //LogWrite("NowSecs = %d CurrEndSecs=%d\n",nowWeeklySeconds,currentSchedulePlaylist.endWeeklySeconds);
+    LogWrite("NowSecs = %d CurrEndSecs=%d\n",nowWeeklySeconds,currentSchedulePlaylist.endWeeklySeconds);
     if(nowWeeklySeconds == currentSchedulePlaylist.endWeeklySeconds)
     {
       CurrentScheduleHasbeenLoaded = 0;

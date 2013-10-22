@@ -66,7 +66,7 @@ void CalculateNextPlayListEntry()
 		LogWrite("currentPlaylistEntry = %d Last=%d maxEntryIndex=%d repeat=%d \n",playlistDetails.currentPlaylistEntry, playlistDetails.last,maxEntryIndex,playlistDetails.repeat); 
 		if((playlistDetails.currentPlaylistEntry == maxEntryIndex) && !playlistDetails.repeat)
 		{
-			LogWrite("\nStopping Gracefully\n");
+			LogWrite("Stopping Gracefully\n");
 			playlistDetails.currentPlaylistEntry = PLAYLIST_STOP_INDEX;
 		}
  		else if(playlistDetails.currentPlaylistEntry >= maxEntryIndex)
