@@ -131,7 +131,11 @@ void PollMusicInfo()
 	read_fd_set = active_fd_set;
 	if(select(FD_SETSIZE, &read_fd_set, NULL, NULL, &timeout) < 0)
   {
-   	LogWrite("Error Select:%d\n",errno);
+   	LogWrite("Error Select: %d\n",errno);
+	if ( errno == 4 )
+	{
+		FD_ZERO(&read_fd_set);
+	}
    	return; 
   }
 	if(FD_ISSET(pipeFromOGG[PIPE_READ], &read_fd_set))
