@@ -55,7 +55,7 @@ do
 {
 	global $fppMode, $volume, $settingsFile;
 	global $mediaDirectory, $musicDirectory, $sequenceDirectory, $playlistDirectory;
-	global $eventDirectroy, $videoDirectory;
+	global $eventDirectory, $videoDirectory, $scriptDirectory, $logDirectory;
 	global $universeFile, $pixelnetFile, $scheduleFile, $bytesFile;
 
 	// Parse the file, assuming it exists
@@ -98,6 +98,9 @@ do
 			break;
 		case "effectDirectory":
 			$effectDirectory = trim($split[1]) . "/";
+			break;
+		case "logDirectory":
+			$logDirectory = trim($split[1]) . "/";
 			break;
 		case "scriptDirectory":
 			$scriptDirectory = trim($split[1]) . "/";
