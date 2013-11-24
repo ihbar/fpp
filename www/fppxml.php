@@ -2060,48 +2060,7 @@ function GetLog()
 
 function UpdatePlugin()
 {
-	$plugin = $_GET['plugin'];
-	check($plugin);
-
-	global $pluginDirectory, $scriptDirectory;
-
-	if ( !file_exists("$pluginDirectory/$plugin") )
-	{
-		EchoStatusXML('Failure');
-		return;
-	}
-
-	if ( file_exists("$pluginDirectory/$plugin/fpp_uninstall.sh") )
-	{
-		exec("$pluginDirectory/$plugin/fpp_uninstall.sh", $output, $return_val);
-		unset($output);
-		if ( $return_val != 0 )
-		{
-			EchoStatusXML('Failure');
-			return;
-		}
-	}
-	
-	exec("$scriptDirectory/uninstallPlugin $plugin");
-
-	require_once("pluginData.inc.php");
-
-	foreach ($plugins as $available_plugin)
-	{
-		if ( $available_plugin['shortName'] == $plugin )
-		{
-			exec("$scriptDirectory/installPlugin $plugin \"" . $available_plugin['sourceUrl'] . "\"", $output, $return_val);
-			unset($output);
-			if ( $return_val != 0 )
-			{
-				EchoStatusXML('Failure');
-				return;
-			}
-			}
-	}
-
 	EchoStatusXML('Failure');
-	//EchoStatusXML('Success');
 }
 
 function UninstallPlugin()
@@ -2116,18 +2075,6 @@ function UninstallPlugin()
 		EchoStatusXML('Failure');
 		error_log("Failure, no plugin to uninstall");
 		return;
-	}
-
-	if ( file_exists("$pluginDirectory/$plugin/fpp_uninstall.sh") )
-	{
-		exec("$pluginDirectory/$plugin/fpp_uninstall.sh", $output, $return_val);
-		unset ($output);
-		if ( $return_val != 0 )
-		{
-			EchoStatusXML('Failure');
-			error_log("Failure with plugin's uninstall script");
-			return;
-		}
 	}
 
 	exec("$fppDir/scripts/uninstall_plugin $plugin", $output, $return_val);
@@ -2147,7 +2094,14 @@ function InstallPlugin()
 	$plugin = $_GET['plugin'];
 	check($plugin);
 
-	global $fppDir;
+	global $fppDir, $pluginDirectory;
+
+	if ( file_exists("$pluginDirectory/$plugin") )
+	{
+		EchoStatusXML('Failure');
+		error_log("Failure, plugin you're trying to install already exists");
+		return;
+	}
 
 	require_once("pluginData.inc.php");
 
@@ -2160,6 +2114,7 @@ function InstallPlugin()
 			if ( $return_val != 0 )
 			{
 				EchoStatusXML('Failure');
+				error_log("Failure with FPP install script");
 				return;
 			}
 		}
