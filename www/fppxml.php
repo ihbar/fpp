@@ -2114,6 +2114,7 @@ function UninstallPlugin()
 	if ( !file_exists("$pluginDirectory/$plugin") )
 	{
 		EchoStatusXML('Failure');
+		error_log("Failure, no plugin to uninstall");
 		return;
 	}
 
@@ -2124,6 +2125,7 @@ function UninstallPlugin()
 		if ( $return_val != 0 )
 		{
 			EchoStatusXML('Failure');
+			error_log("Failure with plugin's uninstall script");
 			return;
 		}
 	}
@@ -2133,6 +2135,7 @@ function UninstallPlugin()
 	if ( $return_val != 0 )
 	{
 		EchoStatusXML('Failure');
+		error_log("Failure with FPP uninstall script");
 		return;
 	}
 
