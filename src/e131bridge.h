@@ -5,7 +5,10 @@
 
 #define MAX_TIME_BETWEEN_RECEIVE                              5000
 #define MIN_DELAY_BETWEEN_SENDING_PIXELNET            47000
-      
+
+extern long long lastBridgeDataReceived;
+
+int IsBridgeRunning();
 void Bridge_Initialize();
 void Bridge_InitializeSockets();
 void Bridge_Process();

@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "effects.h"
 #include "lightthread.h"
+#include "e131bridge.h"
 
 #include "ogg123.h"
 #include <sys/types.h>
@@ -59,7 +60,9 @@ char * E131LocalAddress;
 size_t stepSize=8192;
 
 FILE *seqFile=NULL;
+int fileDataUpdated = 0;
 char fileData[65536];
+pthread_mutex_t fileDataLock;
 unsigned long filePosition=0;
 unsigned long CalculatedMusicFilePosition;
 unsigned long currentSequenceFileSize=0;
@@ -79,6 +82,24 @@ char lastControlMajor = 0;
 char lastControlMinor = 0;
 
 void ShowDiff(void);
+
+int InitializeFileDataLock(void)
+{
+	if (pthread_mutex_init(&fileDataLock, NULL) != 0)
+	{
+		LogWrite("fileData mutex init failed\n");
+		return 0;
+	}
+
+	bzero(fileData, sizeof(fileData));
+
+	return 1;
+}
+
+void DestroyFileDataLock(void)
+{
+	pthread_mutex_destroy(&fileDataLock);
+}
 
 void E131_Initialize()
 {
@@ -272,7 +293,7 @@ void E131_ReadData(void)
 			E131_CloseSequenceFile();
 		}
 	}
-	else
+	else if (!IsBridgeRunning())
 	{
 		bzero(fileData, sizeof(fileData));
 	}
@@ -285,29 +306,33 @@ void E131_Send()
 {
   struct itimerval tout_val;
 
-	for(i=0;i<UniverseCount;i++)
+	if (!IsBridgeRunning())
 	{
-		memcpy((void*)(E131packet+E131_HEADER_LENGTH),(void*)(fileData+universes[i].startAddress-1),universes[i].size);
-
-		E131packet[E131_SEQUENCE_INDEX] = E131sequenceNumber;
-		E131packet[E131_UNIVERSE_INDEX] = (char)(universes[i].universe/256);
-		E131packet[E131_UNIVERSE_INDEX+1]	= (char)(universes[i].universe%256);
-		E131packet[E131_COUNT_INDEX] = (char)((universes[i].size+1)/256);
-		E131packet[E131_COUNT_INDEX+1] = (char)((universes[i].size+1)%256);
-		if(sendto(sendSocket, E131packet, universes[i].size + E131_HEADER_LENGTH, 0, (struct sockaddr*)&E131address[i], sizeof(E131address[i])) < 0)
+		for(i=0;i<UniverseCount;i++)
 		{
-			return;
+			memcpy((void*)(E131packet+E131_HEADER_LENGTH),(void*)(fileData+universes[i].startAddress-1),universes[i].size);
+
+			E131packet[E131_SEQUENCE_INDEX] = E131sequenceNumber;
+			E131packet[E131_UNIVERSE_INDEX] = (char)(universes[i].universe/256);
+			E131packet[E131_UNIVERSE_INDEX+1]	= (char)(universes[i].universe%256);
+			E131packet[E131_COUNT_INDEX] = (char)((universes[i].size+1)/256);
+			E131packet[E131_COUNT_INDEX+1] = (char)((universes[i].size+1)%256);
+			if(sendto(sendSocket, E131packet, universes[i].size + E131_HEADER_LENGTH, 0, (struct sockaddr*)&E131address[i], sizeof(E131address[i])) < 0)
+			{
+				return;
+			}
+		}
+
+		E131sequenceNumber++;
+
+		if (IsSequenceRunning())
+		{
+			E131sequenceFramesSent++;
+			E131secondsElasped = (int)((float)(filePosition-CHANNEL_DATA_OFFSET)/((float)stepSize*(float)20.0));
+			E131secondsRemaining = E131totalSeconds-E131secondsElasped;
 		}
 	}
 
-	E131sequenceNumber++;
-
-	if (IsSequenceRunning())
-	{
-		E131sequenceFramesSent++;
-		E131secondsElasped = (int)((float)(filePosition-CHANNEL_DATA_OFFSET)/((float)stepSize*(float)20.0));
-		E131secondsRemaining = E131totalSeconds-E131secondsElasped;
-	}
 	// Send data to pixelnet board
 	E131_SendPixelnetDMXdata();
 }

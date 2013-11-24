@@ -40,6 +40,8 @@ int main(int argc, char *argv[])
 
 	CheckExistanceOfDirectoriesAndFiles();
 
+	InitializeFileDataLock();
+
 	E131_Initialize();
 
 	InitializePixelnetDMX();
@@ -66,6 +68,7 @@ int main(int argc, char *argv[])
 	}
 
 	CloseEffects();
+	DestroyFileDataLock();
 
 	return 0;
 }

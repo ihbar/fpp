@@ -11,8 +11,6 @@
 #include <string.h>
 #include <pthread.h>
 
-extern char fileData[65536];
-
 pthread_t pixelnetDMXthread;
 char PixelnetDMXcontrolHeader[] = {0x55,0x55,0x55,0x55,0x55,0xCC};
 char PixelnetDMXdataHeader[] = {0xCC,0xCC,0xCC,0xCC,0xCC,0x55};
@@ -74,13 +72,16 @@ void SendPixelnetDMX(void)
 {
 	int i;
 	memcpy(bufferPixelnetDMX,PixelnetDMXdataHeader,PIXELNET_HEADER_SIZE);
+	pthread_mutex_lock(&fileDataLock);
 	memcpy(&bufferPixelnetDMX[PIXELNET_HEADER_SIZE],fileData,PIXELNET_DMX_DATA_SIZE);
-	for(i=0;i<PIXELNET_DMX_BUF_SIZE;i++)
+	fileDataUpdated = 0;
+	pthread_mutex_unlock(&fileDataLock);
+	for(i=PIXELNET_HEADER_SIZE;i<PIXELNET_DMX_BUF_SIZE;i++)
 	{
-		//if (bufferPixelnetDMX[i] == 170)
-		//{
-		//	bufferPixelnetDMX[i] = 171;
-		//}
+		if (bufferPixelnetDMX[i] == 170)
+		{
+			bufferPixelnetDMX[i] = 171;
+		}
 	}
 	wiringPiSPIDataRW (0, bufferPixelnetDMX, PIXELNET_DMX_BUF_SIZE);
 }

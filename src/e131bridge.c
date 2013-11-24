@@ -1,6 +1,10 @@
 #include "e131bridge.h"
 #include "log.h"
 #include "E131.h"
+#include "pixelnetDMX.h"
+#include "settings.h"
+#include "lightthread.h"
+#include "fppd.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -26,12 +30,20 @@ char BridgeRunning=0;
 
 extern UniverseEntry universes[MAX_UNIVERSE_COUNT];
 extern int UniverseCount;
-extern char fileData[65536];
+
+int IsBridgeRunning(void)
+{
+	if (getFPPmode() == BRIDGE_MODE)
+		return 1;
+
+	return 0;
+}
 
 	void Bridge_Process()
 	{
 		int universe;
 		Bridge_Initialize();
+		StartLightThread();
     while(BridgeRunning) 
 		{
 		  Commandproc();
@@ -122,17 +134,19 @@ void Bridge_InitializeSockets()
 		int universeIndex = Bridge_GetIndexFromUniverseNumber(universe);
 		if(universeIndex!=BRIDGE_INVALID_UNIVERSE_INDEX)
 		{
+			pthread_mutex_lock(&fileDataLock);
 			memcpy((void *)(fileData+universes[universeIndex].startAddress-1),
 			       (void*)(bridgeBuffer+E131_HEADER_LENGTH),
 						  universes[universeIndex].size);
+			fileDataUpdated = 1;
+			pthread_mutex_unlock(&fileDataLock);
 			universes[universeIndex].bytesReceived+=universes[universeIndex].size;
 			//LogWrite("Storing StartAddress = %d size = %d\n",universes[universeIndex].startAddress,universes[universeIndex].size);
 		}
-		if(universe == universes[UniverseCount-1].universe)
-//		if(universe == 2)
-		{
-			SendPixelnetDMX(0);
-		}
+//		if(universe == universes[UniverseCount-1].universe)
+//		{
+//			SendPixelnetDMX(0);
+//		}
 	}
 
 	int Bridge_GetIndexFromUniverseNumber(int universe)

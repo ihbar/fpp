@@ -21,19 +21,37 @@ int ThreadIsRunning = 0;
 /*
  * Main loop in lighting thread
  */
-void *RunLightThread(void)
+void *RunLightThread(void *data)
 {
 	long long startTime;
 	struct timespec ts;
+	(void)data;
 
 	ThreadIsRunning = 1;
 	while (RunThread)
 	{
 		startTime = GetTime();
-		E131_Send();
+		if (IsBridgeRunning())
+		{
+			pthread_mutex_lock(&fileDataLock);
+			if (fileDataUpdated)
+			{
+				pthread_mutex_unlock(&fileDataLock);
+				E131_Send();
+			}
+			else
+			{
+				pthread_mutex_unlock(&fileDataLock);
+			}
+		}
+		else
+		{
+			E131_Send();
+		}
+
 		E131_ReadData();
 
-		if (IsSequenceRunning() || IsEffectRunning())
+		if (IsSequenceRunning() || IsEffectRunning() || IsBridgeRunning())
 		{
 			ts.tv_sec = 0;
 			ts.tv_nsec = (LightDelay - (GetTime() - startTime)) * 1000;

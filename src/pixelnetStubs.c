@@ -1,5 +1,6 @@
 #include "log.h"
 #include "pixelnetDMX.h"
+#include "E131.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -19,6 +20,9 @@ void InitializePixelnetDMX()
 void SendPixelnetDMX(void)
 {
 //	LogWrite("Send DMX data stub\n");
+	pthread_mutex_lock(&fileDataLock);
+	fileDataUpdated = 0;
+	pthread_mutex_unlock(&fileDataLock);
 }
 
 void SendPixelnetDMXConfig()
@@ -28,7 +32,7 @@ void SendPixelnetDMXConfig()
 
 int IsPixelnetDMXActive(void)
 {
-	return 0;
+	return 1;
 }
 
 void LoadPixelnetDMXsettingsFromFile()

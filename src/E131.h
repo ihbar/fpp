@@ -1,6 +1,7 @@
 #ifndef _E131_H
 #define _E131_H
 
+#include <pthread.h>
 
 #define MAX_UNIVERSE_COUNT    128
 #define E131_HEADER_LENGTH    126
@@ -35,6 +36,13 @@ typedef struct{
 
 extern int E131status;
 extern int E131sequenceFramesSent;
+
+extern int fileDataUpdated;
+extern char fileData[65536];
+extern pthread_mutex_t fileDataLock;
+
+int InitializeFileDataLock(void);
+void DestroyFileDataLock(void);
 
 int IsSequenceRunning(void);
 char * GetE131LocalAddressFromInterface();
