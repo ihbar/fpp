@@ -23,7 +23,6 @@ unsigned char CurrentScheduleHasbeenLoaded=0;
 unsigned char NextScheduleHasbeenLoaded=0;
 int nowWeeklySeconds2;
 
-extern int FPPstatus;
 extern PlaylistDetails playlistDetails;
 
 
@@ -48,10 +47,14 @@ void ScheduleProc()
       {
         LoadNextScheduleInfo();
       }
-			if(Schedule[currentSchedulePlaylist.ScheduleEntryIndex].repeat)
-			{
+// FIXME:
+// Why do we only check to see if we should stop if we were repeating?
+// Commenting out for now to fix several reported issues, but these lines
+// will probably go away after a discussion.
+//			if(Schedule[currentSchedulePlaylist.ScheduleEntryIndex].repeat)
+//			{
 	      PlayListStopCheck();
-			}
+//			}
       break;
     default:
       break;
@@ -190,7 +193,7 @@ void SetScheduleEntrysWeeklyStartAndEndSeconds(ScheduleEntry * entry)
       entry->weeklyStartSeconds[4] = GetWeeklySeconds(INX_FRI,entry->startHour,entry->startMinute,entry->startSecond);
       entry->weeklyEndSeconds[0] = GetWeeklySeconds(INX_MON,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklyEndSeconds[1] = GetWeeklySeconds(INX_TUE,entry->endHour,entry->endMinute,entry->endSecond);
-      entry->weeklyEndSeconds[2] = GetWeeklySeconds(INX_WED,entry->startHour,entry->endMinute,entry->endSecond);
+      entry->weeklyEndSeconds[2] = GetWeeklySeconds(INX_WED,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklyEndSeconds[3] = GetWeeklySeconds(INX_THU,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklyEndSeconds[4] = GetWeeklySeconds(INX_FRI,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklySecondCount = 5;
@@ -228,7 +231,7 @@ void SetScheduleEntrysWeeklyStartAndEndSeconds(ScheduleEntry * entry)
       entry->weeklyEndSeconds[0] = GetWeeklySeconds(INX_SUN,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklyEndSeconds[1] = GetWeeklySeconds(INX_MON,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklyEndSeconds[2] = GetWeeklySeconds(INX_TUE,entry->endHour,entry->endMinute,entry->endSecond);
-      entry->weeklyEndSeconds[3] = GetWeeklySeconds(INX_WED,entry->startHour,entry->endMinute,entry->endSecond);
+      entry->weeklyEndSeconds[3] = GetWeeklySeconds(INX_WED,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklyEndSeconds[4] = GetWeeklySeconds(INX_THU,entry->endHour,entry->endMinute,entry->endSecond);
       entry->weeklySecondCount = 5;
 			break;
@@ -291,6 +294,8 @@ void PlayListLoadCheck()
         Schedule[currentSchedulePlaylist.ScheduleEntryIndex].endSecond,
         Schedule[currentSchedulePlaylist.ScheduleEntryIndex].playList,
         currentSchedulePlaylist.endWeeklySeconds - currentSchedulePlaylist.startWeeklySeconds);
+      LogWrite("NowSecs = %d, CurrStartSecs = %d, CurrEndSecs = %d (%d seconds away)\n",
+        nowWeeklySeconds, currentSchedulePlaylist.startWeeklySeconds, currentSchedulePlaylist.endWeeklySeconds, displayDiff);
       FPPstatus = FPP_STATUS_PLAYLIST_PLAYING;
     }
   }
