@@ -474,83 +474,71 @@ int loadSettings(const char *filename)
 			}
 			else if ( strcmp(key, "eventDirectory") == 0 )
 			{
-				if ( ! settings.eventDirectory )
+				token = strtok(NULL, "=");
+				if ( ! token )
 				{
-					token = strtok(NULL, "=");
-					if ( ! token )
-					{
-						fprintf(stderr, "Error tokenizing value for eventDirectory setting\n");
-						continue;
-					}
-					value = trimwhitespace(token);
-					if ( strlen(value) )
-					{
-					    free(settings.eventDirectory);
-						settings.eventDirectory = strdup(token);
-					}
-					else
-						fprintf(stderr, "Failed to load eventDirectory from config file\n");
+					fprintf(stderr, "Error tokenizing value for eventDirectory setting\n");
+					continue;
 				}
+				value = trimwhitespace(token);
+				if ( strlen(value) )
+				{
+				    free(settings.eventDirectory);
+					settings.eventDirectory = strdup(value);
+				}
+				else
+					fprintf(stderr, "Failed to load eventDirectory from config file\n");
 			}
 			else if ( strcmp(key, "videoDirectory") == 0 )
 			{
-				if ( ! settings.videoDirectory )
+				token = strtok(NULL, "=");
+				if ( ! token )
 				{
-					token = strtok(NULL, "=");
-					if ( ! token )
-					{
-						fprintf(stderr, "Error tokenizing value for videoDirectory setting\n");
-						continue;
-					}
-					value = trimwhitespace(token);
-					if ( strlen(value) )
-					{
-					    free(settings.videoDirectory);
-						settings.videoDirectory = strdup(token);
-					}
-					else
-						fprintf(stderr, "Failed to load videoDirectory from config file\n");
+					fprintf(stderr, "Error tokenizing value for videoDirectory setting\n");
+					continue;
 				}
+				value = trimwhitespace(token);
+				if ( strlen(value) )
+				{
+				    free(settings.videoDirectory);
+					settings.videoDirectory = strdup(value);
+				}
+				else
+					fprintf(stderr, "Failed to load videoDirectory from config file\n");
 			}
 			else if ( strcmp(key, "effectDirectory") == 0 )
 			{
-				if ( ! settings.effectDirectory )
+				token = strtok(NULL, "=");
+				if ( ! token )
 				{
-					token = strtok(NULL, "=");
-					if ( ! token )
-					{
-						fprintf(stderr, "Error tokenizing value for effectDirectory setting\n");
-						continue;
-					}
-					value = trimwhitespace(token);
-					if ( strlen(value) )
-					{
-					    free(settings.effectDirectory);
-						settings.effectDirectory = strdup(token);
-					}
-					else
-						fprintf(stderr, "Failed to load effectDirectory from config file\n");
+					fprintf(stderr, "Error tokenizing value for effectDirectory setting\n");
+					continue;
 				}
+				value = trimwhitespace(token);
+				if ( strlen(value) )
+				{
+				    free(settings.effectDirectory);
+					settings.effectDirectory = strdup(value);
+				}
+				else
+					fprintf(stderr, "Failed to load effectDirectory from config file\n");
 			}
 			else if ( strcmp(key, "scriptDirectory") == 0 )
 			{
-				if ( ! settings.scriptDirectory )
+				token = strtok(NULL, "=");
+				if ( ! token )
 				{
-					token = strtok(NULL, "=");
-					if ( ! token )
-					{
-						fprintf(stderr, "Error tokenizing value for scriptDirectory setting\n");
-						continue;
-					}
-					value = trimwhitespace(token);
-					if ( strlen(value) )
-					{
-					    free(settings.scriptDirectory);
-						settings.scriptDirectory = strdup(token);
-					}
-					else
-						fprintf(stderr, "Failed to load scriptDirectory from config file\n");
+					fprintf(stderr, "Error tokenizing value for scriptDirectory setting\n");
+					continue;
 				}
+				value = trimwhitespace(token);
+				if ( strlen(value) )
+				{
+				    free(settings.scriptDirectory);
+					settings.scriptDirectory = strdup(value);
+				}
+				else
+					fprintf(stderr, "Failed to load scriptDirectory from config file\n");
 			}
 			else if ( strcmp(key, "playlistDirectory") == 0 )
 			{
