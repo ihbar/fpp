@@ -129,6 +129,11 @@ while ( $data != NULL );
 
 fclose($fd);
 
+putenv("SCRIPTDIR=$scriptDirectory");
+putenv("MEDIADIR=$mediaDirectory");
+putenv("LOGDIR=$logDirectory");
+putenv("SETTINGSFILE=$settingsFile");
+
 if (defined('debug'))
 {
 	error_log("SET:");
