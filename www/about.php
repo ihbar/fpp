@@ -14,6 +14,7 @@ error_reporting(E_ALL);
 $fpp_version = "v" . exec("git --git-dir=".dirname(dirname(__FILE__))."/.git/ describe --tags", $output, $return_val);
 if ( $return_val != 0 )
 	$fpp_version = "Unknown";
+unset($output);
 
 if (!file_exists("/etc/fpp/config_version") && file_exists("/etc/fpp/rfs_version"))
 {
@@ -26,6 +27,7 @@ if (file_exists("/etc/fpp/rfs_version"))
 	$os_build = exec("cat /etc/fpp/rfs_version", $output, $return_val);
 	if ( $return_val != 0 )
 		$os_build = "Unknown";
+	unset($output);
 }
 
 $os_version = "Unknown";
@@ -34,7 +36,13 @@ if (file_exists("/etc/os-release"))
 	$info = parse_ini_file("/etc/os-release");
 	if (isset($info["PRETTY_NAME"]))
 		$os_version = $info["PRETTY_NAME"];
+	unset($output);
 }
+
+$kernel_version = exec("/bin/uname -r", $output, $return_val);
+if ( $return_val != 0 )
+	$kernel_version = "Unknown";
+unset($output);
 
 $git_version = exec("git --git-dir=".dirname(dirname(__FILE__))."/.git/ rev-parse --short HEAD", $output, $return_val);
 if ( $return_val != 0 )
@@ -72,6 +80,37 @@ function getFileCount($dir)
   }
 
   return $i;
+}
+
+function getRemappedChannelCount()
+{
+	global $mediaDirectory;
+
+	$file = $mediaDirectory . "/channelremap";
+
+	$f = fopen($file, "r");
+	if($f == FALSE)
+	{
+		return 0;
+	}
+
+	$i = 0;
+    while (!feof($f))
+	{
+		$line = fgets($f);
+		if (!feof($f))
+		{
+			$entry = explode(",", $line, 3);
+			if (($entry[0] > 0) && ($entry[1] > 0) && ($entry[2] > 0))
+			{
+				$i += $entry[2];
+			}
+		}
+	}
+
+	fclose($f);
+
+	return $i;
 }
 
 function PrintGitBranchOptions()
@@ -210,6 +249,7 @@ a:visited {
             <tr><td>FPP Version:</td><td><? echo $fpp_version; ?></td></tr>
             <tr><td>FPP OS Build:</td><td><? echo $os_build; ?></td></tr>
             <tr><td>OS Version:</td><td><? echo $os_version; ?></td></tr>
+            <tr><td>Kernel Version:</td><td><? echo $kernel_version; ?></td></tr>
 <? if (file_exists($mediaDirectory."/.developer_mode")) { ?>
             <tr><td>Git Branch:</td><td><select id='gitBranch' onChange="ChangeGitBranch($('#gitBranch').val());">
 <? PrintGitBranchOptions(); ?>
@@ -255,12 +295,17 @@ a:visited {
         <div class='aboutRight'>
           <table class='tblAbout'>
             <tr><td><b>Player Stats</b></td><td>&nbsp;</td></tr>
-            <tr><td>Playlists:</td><td><? echo getFileCount($playlistDirectory); ?></td></tr>
-            <tr><td>Sequence Files:</td><td><? echo getFileCount($sequenceDirectory); ?></td></tr>
-            <tr><td>Audio Files:</td><td><? echo getFileCount($musicDirectory); ?></td></tr>
-            <tr><td>Video Files:</td><td><? echo getFileCount($videoDirectory); ?></td></tr>
-            <tr><td>Events Defined:</td><td><? echo getFileCount($eventDirectory); ?></td></tr>
-            <tr><td>Scripts Defined:</td><td><? echo getFileCount($scriptDirectory); ?></td></tr>
+            <tr><td>Playlists:</td><td><a href='playlists.php' class='nonULLink'><? echo getFileCount($playlistDirectory); ?></a></td></tr>
+            <tr><td>Sequences:</td><td><a href='uploadfile.php?tab=0' class='nonULLink'><? echo getFileCount($sequenceDirectory); ?></a></td></tr>
+            <tr><td>Audio Files:</td><td><a href='uploadfile.php?tab=1' class='nonULLink'><? echo getFileCount($musicDirectory); ?></a></td></tr>
+            <tr><td>Videos:</td><td><a href='uploadfile.php?tab=2' class='nonULLink'><? echo getFileCount($videoDirectory); ?></a></td></tr>
+            <tr><td>Events:</td><td><a href='events.php' class='nonULLink'><? echo getFileCount($eventDirectory); ?></a></td></tr>
+            <tr><td>Effects:</td><td><a href='uploadfile.php?tab=3' class='nonULLink'><? echo getFileCount($effectDirectory); ?></a></td></tr>
+            <tr><td>Scripts:</td><td><a href='uploadfile.php?tab=4' class='nonULLink'><? echo getFileCount($scriptDirectory); ?></a></td></tr>
+
+			<!-- FIXME, make this a link to the channel remap screen -->
+			<tr><td>Remapped Channels:</td><td><? echo getRemappedChannelCount(); ?> </td></tr>
+
             <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
 
             <tr><td><b>Disk Utilization</b></td><td>&nbsp;</td></tr>
@@ -302,7 +347,7 @@ a:visited {
         Video Tutorials by:<br />
         Alan Dahl (bajadahl)<br />
         <br />
-        Copyright 2013
+        Copyright 2013-2014
       </div>
     </div>
     </fieldset>

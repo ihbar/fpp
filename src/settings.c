@@ -31,6 +31,8 @@ void initSettings(void)
 	settings.settingsFile = strdup("/home/pi/media/settings");
 	settings.daemonize = 1;
 	settings.E131interface = strdup("eth0");
+	settings.USBDonglePort = strdup("DISABLED");
+	settings.USBDongleType = strdup("DMX");
 	settings.controlMajor = 0;
 	settings.controlMinor = 0;
 }
@@ -156,6 +158,14 @@ void printSettings(void)
 		fprintf(fd, "E131interface(%u): %s\n",
 				strlen(settings.E131interface),
 				settings.E131interface);
+	if ( settings.USBDonglePort )
+		fprintf(fd, "USBDonglePort(%u): %s\n",
+				strlen(settings.USBDonglePort),
+				settings.USBDonglePort);
+	if ( settings.USBDongleType )
+		fprintf(fd, "USBDongleType(%u): %s\n",
+				strlen(settings.USBDongleType),
+				settings.USBDongleType);
 	if ( settings.controlMajor != 0 )
 		fprintf(fd, "controlMajor: %u\n", settings.controlMajor);
 	if ( settings.controlMinor != 0 )
@@ -193,11 +203,20 @@ printf("Usage: %s [OPTION...]\n"
 "\t-b, --bytes-file\tSet the bytes received file\n"
 "\t-h, --help\t\tThis menu.\n"
 "\t    --mpg123-path\tSet location of mpg123 executable\n"
-"\t    --silence-music\tSet location of silence.ogg file\n", appname);
+"\t    --silence-music\tSet location of silence.ogg file\n"
+"\t    --log-level LEVEL\tSet the log output level (LEVEL: info, warn, debug)\n"
+"\t    --log-mask LIST\tSet the log output mask\n"
+"\t                   \tWhere LIST is a comma separated list made up of:\n"
+"\t                   \t generic, channelout, channeldata, command, e131bridge,\n"
+"\t                   \t effect, event, mediaout, playlist, schedule, sequence,\n"
+"\t                   \t setting, all, most, generic.  ('most' excludes channeldata)\n"
+"\t                   \tDefault logging is '--log-level info --log-mask most'\n"
+	, appname);
 }
 
 int parseArguments(int argc, char **argv)
 {
+	char *s = NULL;
 	int c;
 	while (1)
 	{
@@ -221,9 +240,11 @@ int parseArguments(int argc, char **argv)
 			{"pixelnet-file",		required_argument,	0, 'p'},
 			{"schedule-file",		required_argument,	0, 's'},
 			{"log-file",			required_argument,	0, 'l'},
-			{"silence-music",		required_argument,	0,	1 },
 			{"bytes-file",			required_argument,	0, 'b'},
 			{"help",				no_argument,		0, 'h'},
+			{"silence-music",		required_argument,	0,	1 },
+			{"log-level",			required_argument,	0,  2 },
+			{"log-mask",			required_argument,	0,  3 },
 			{0,						0,					0,	0}
 		};
 
@@ -238,9 +259,62 @@ int parseArguments(int argc, char **argv)
 				free(settings.silenceMusic);
 				settings.silenceMusic = strdup(optarg);
 				break;
+			case 2: // log-level
+				if (!strcmp(optarg, "warn")) {
+					logLevel = LOG_WARN;
+				} else if (!strcmp(optarg, "debug")) {
+					logLevel = LOG_DEBUG;
+				} else if (!strcmp(optarg, "info")) {
+					logLevel = LOG_INFO;
+				} else {
+					LogErr(VB_SETTING, "Unable to parse log level '-ll %s'\n", optarg);
+				}
+
+				LogInfo(VB_SETTING, "Log Level set to %d\n", logLevel);
+				break;
+			case 3: // log-mask
+				logMask = VB_NONE;
+
+				s = strtok(optarg, ",");
+				while (s) {
+					if (!strcmp(s, "none")) {
+						logMask = VB_NONE;
+					} else if (!strcmp(s, "all")) {
+						logMask = VB_ALL;
+					} else if (!strcmp(s, "generic")) {
+						logMask |= VB_GENERIC;
+					} else if (!strcmp(s, "channelout")) {
+						logMask |= VB_CHANNELOUT;
+					} else if (!strcmp(s, "channeldata")) {
+						logMask |= VB_CHANNELDATA;
+					} else if (!strcmp(s, "command")) {
+						logMask |= VB_COMMAND;
+					} else if (!strcmp(s, "e131bridge")) {
+						logMask |= VB_E131BRIDGE;
+					} else if (!strcmp(s, "effect")) {
+						logMask |= VB_EFFECT;
+					} else if (!strcmp(s, "event")) {
+						logMask |= VB_EVENT;
+					} else if (!strcmp(s, "mediaout")) {
+						logMask |= VB_MEDIAOUT;
+					} else if (!strcmp(s, "playlist")) {
+						logMask |= VB_PLAYLIST;
+					} else if (!strcmp(s, "schedule")) {
+						logMask |= VB_SCHEDULE;
+					} else if (!strcmp(s, "sequence")) {
+						logMask |= VB_SEQUENCE;
+					} else if (!strcmp(s, "setting")) {
+						logMask |= VB_SETTING;
+					}
+
+					s = strtok(NULL,",");
+				}
+
+				LogInfo(VB_SETTING, "Log Mask set to %d\n", logMask);
+				break;
 			case 'c': //config-file
 				if ( loadSettings(optarg) != 0 )
-					LogWrite("Failed to load settings file given as argument: '%s'\n", optarg);
+					LogErr(VB_SETTING, "Failed to load settings file given as argument: '%s'\n", optarg);
 				else
 				{
 					free(settings.settingsFile);
@@ -685,6 +759,40 @@ int loadSettings(const char *filename)
 				else
 					fprintf(stderr, "Failed to load E131interface from config file\n");
 			}
+			else if ( strcmp(key, "USBDonglePort") == 0 )
+			{
+				token = strtok(NULL, "=");
+				if ( ! token )
+				{
+					fprintf(stderr, "Error tokenizing value for USBDonglePort setting\n");
+					continue;
+				}
+				value = trimwhitespace(token);
+				if ( strlen(value) )
+				{
+					free(settings.USBDonglePort);
+					settings.USBDonglePort = strdup(value);
+				}
+				else
+					fprintf(stderr, "Failed to load USBDonglePort from config file\n");
+			}
+			else if ( strcmp(key, "USBDongleType") == 0 )
+			{
+				token = strtok(NULL, "=");
+				if ( ! token )
+				{
+					fprintf(stderr, "Error tokenizing value for USBDongleType setting\n");
+					continue;
+				}
+				value = trimwhitespace(token);
+				if ( strlen(value) )
+				{
+					free(settings.USBDongleType);
+					settings.USBDongleType = strdup(value);
+				}
+				else
+					fprintf(stderr, "Failed to load USBDongleType from config file\n");
+			}
 			else if ( strcmp(key, "controlMajor") == 0 )
 			{
 				token = strtok(NULL, "=");
@@ -753,7 +861,7 @@ int loadSettings(const char *filename)
 	}
 	else
 	{
-		LogWrite("Warning: couldn't open settings file: '%s'!\n", filename);
+		LogErr(VB_SETTING, "Warning: couldn't open settings file: '%s'!\n", filename);
 		return -1;
 	}
 
@@ -848,6 +956,16 @@ char *getE131interface(void)
 	return settings.E131interface;
 }
 
+char *getUSBDonglePort(void)
+{
+	return settings.USBDonglePort;
+}
+
+char *getUSBDongleType(void)
+{
+	return settings.USBDongleType;
+}
+
 unsigned int getControlMajor(void)
 {
 	return settings.controlMajor;
@@ -931,7 +1049,7 @@ int saveSettingsFile(void)
 
 	fclose(fd);
 
-	LogWrite("Wrote config file of size %d\n", bytes);
+	LogInfo(VB_SETTING, "Wrote config file of size %d\n", bytes);
 
 	return 0;
 }
@@ -941,129 +1059,123 @@ void CheckExistanceOfDirectoriesAndFiles(void)
 {
 	if(!DirectoryExists(getMediaDirectory()))
 	{
-		LogWrite("FPP directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "FPP directory does not exist, creating it.\n");
 
 		if ( mkdir(getMediaDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create media directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create media directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getMusicDirectory()))
 	{
-		LogWrite("Music directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Music directory does not exist, creating it.\n");
 
 		if ( mkdir(getMusicDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create music directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create music directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getSequenceDirectory()))
 	{
-		LogWrite("Sequence directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Sequence directory does not exist, creating it.\n");
 
 		if ( mkdir(getSequenceDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create sequence directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create sequence directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getEventDirectory()))
 	{
-		LogWrite("Event directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Event directory does not exist, creating it.\n");
 
 		if ( mkdir(getEventDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create event directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create event directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getVideoDirectory()))
 	{
-		LogWrite("Video directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Video directory does not exist, creating it.\n");
 
 		if ( mkdir(getVideoDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create video directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create video directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getEffectDirectory()))
 	{
-		LogWrite("Effect directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Effect directory does not exist, creating it.\n");
 
 		if ( mkdir(getEffectDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create effect directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create effect directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getScriptDirectory()))
 	{
-		LogWrite("Script directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Script directory does not exist, creating it.\n");
 
 		if ( mkdir(getScriptDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create script directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create script directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if(!DirectoryExists(getPlaylistDirectory()))
 	{
-		LogWrite("Playlist directory does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Playlist directory does not exist, creating it.\n");
 
 		if ( mkdir(getPlaylistDirectory(), 0777) != 0 )
 		{
-			LogWrite("Error: Unable to create playlist directory.\n");
+			LogErr(VB_SETTING, "Error: Unable to create playlist directory.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 
 	if(!FileExists(getUniverseFile()))
 	{
-		LogWrite("Universe file does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Universe file does not exist, creating it.\n");
 
 		char *cmd, *file = getUniverseFile();
 		cmd = malloc(strlen(file)+7);
 		snprintf(cmd, strlen(file)+7, "touch %s", file);
 		if ( system(cmd) != 0 )
 		{
-			LogWrite("Error: Unable to create universe file.\n");
+			LogErr(VB_SETTING, "Error: Unable to create universe file.\n");
 			exit(EXIT_FAILURE);
 		}
 		free(cmd);
 	}
-	if(!FileExists(getPixelnetFile()))
-	{
-		LogWrite("Pixelnet file does not exist, creating it.\n");
-
-		CreatePixelnetDMXfile(getPixelnetFile());
-	}
 	if(!FileExists(getScheduleFile()))
 	{
-		LogWrite("Schedule file does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Schedule file does not exist, creating it.\n");
 
 		char *cmd, *file = getScheduleFile();
 		cmd = malloc(strlen(file)+7);
 		snprintf(cmd, strlen(file)+7, "touch %s", file);
 		if ( system(cmd) != 0 )
 		{
-			LogWrite("Error: Unable to create schedule file.\n");
+			LogErr(VB_SETTING, "Error: Unable to create schedule file.\n");
 			exit(EXIT_FAILURE);
 		}
 		free(cmd);
 	}
 	if(!FileExists(getBytesFile()))
 	{
-		LogWrite("Bytes file does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Bytes file does not exist, creating it.\n");
 
 		char *cmd, *file = getBytesFile();
 		cmd = malloc(strlen(file)+7);
 		snprintf(cmd, strlen(file)+7, "touch %s", file);
 		if ( system(cmd) != 0 )
 		{
-			LogWrite("Error: Unable to create bytes file.\n");
+			LogErr(VB_SETTING, "Error: Unable to create bytes file.\n");
 			exit(EXIT_FAILURE);
 		}
 		free(cmd);
@@ -1071,14 +1183,14 @@ void CheckExistanceOfDirectoriesAndFiles(void)
 
 	if(!FileExists(getSettingsFile()))
 	{
-		LogWrite("Settings file does not exist, creating it.\n");
+		LogWarn(VB_SETTING, "Settings file does not exist, creating it.\n");
 
 		char *cmd, *file = getSettingsFile();
 		cmd = malloc(strlen(file)+7);
 		snprintf(cmd, strlen(file)+7, "touch %s", file);
 		if ( system(cmd) != 0 )
 		{
-			LogWrite("Error: Unable to create settings file.\n");
+			LogErr(VB_SETTING, "Error: Unable to create settings file.\n");
 			exit(EXIT_FAILURE);
 		}
 		free(cmd);

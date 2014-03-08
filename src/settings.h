@@ -5,6 +5,11 @@
 
 #define MAXBUF 1024
 
+enum fppModes {
+	PLAYER_MODE = 0,
+	BRIDGE_MODE
+};
+
 struct config
 {
 	int		verbose;
@@ -27,6 +32,8 @@ struct config
 	char	*settingsFile;
 	char	*bytesFile;
 	char	*E131interface;
+	char	*USBDonglePort;
+	char	*USBDongleType;
 
 	unsigned int controlMajor;
 	unsigned int controlMinor;
@@ -69,6 +76,8 @@ char *getSilenceMusic(void);
 char *getBytesFile(void);
 char *getSettingsFile(void);
 char *getE131interface(void);
+char *getUSBDonglePort(void);
+char *getUSBDongleType(void);
 unsigned int getControlMajor(void);
 unsigned int getControlMinor(void);
 

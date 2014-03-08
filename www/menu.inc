@@ -1,5 +1,7 @@
 <?php
 
+$kernel_version = exec("uname -r");
+
 $fpp_version = "v" . exec("git --git-dir=".dirname(dirname(__FILE__))."/.git/ describe --tags", $output, $return_val);
 unset($output);
 if ( $return_val != 0 ) 
@@ -11,7 +13,7 @@ unset($output);
   <div class="header">
     <div class="headerLeft"><a href="http://www.falconchristmas.com"><img src="images/falconlogo.png" class="logo" /></a></div>
     <div class="headerCenter"><div class="siteName">Falcon Pi Player (FPP)</div>
-      Version: <a href='about.php' style="text-decoration: none; color: blue;"><?php echo $fpp_version; ?></a>
+      Version: <a href='about.php' class='nonULLink'><?php echo $fpp_version; ?></a>
     </div>
     <div class="headerRight"><a href="http://raspberrypi.org"><img src="images/large_Raspberry_Pi_Logo_4.png" class="logo" /></a></div>
     <div class="clear"></div>
@@ -95,6 +97,9 @@ if ( $handle )
 	}
 }
 ?>
+<? if ($kernel_version != "3.6.11-atsw-rtc+") { ?>
+          <li><a href="usbdongle.php">USB Dongle</a></li>
+<? } ?>
         </ul>
       </li>
       <li><a href="#">Help</a>

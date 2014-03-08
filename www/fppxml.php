@@ -84,6 +84,7 @@ $command_array = Array(
 	"updatePlugin" => 'UpdatePlugin',
 	"uninstallPlugin" => 'UninstallPlugin',
 	"installPlugin" => 'InstallPlugin',
+	"saveUSBDongle" => 'SaveUSBDongle',
 	"getInterfaceInfo" => 'GetInterfaceInfo',
 	"setPiLCDenabled" => 'SetPiLCDenabled'
 );
@@ -404,7 +405,8 @@ function MoveFile()
 				exit(1);
 			}
 		}
-		else if (strpos(strtolower($file),".ogg") !== false)
+		else if ((strpos(strtolower($file),".mp3") !== false) ||
+		         (strpos(strtolower($file),".ogg") !== false))
 		{
 			if ( !rename($mediaDirectory."/upload/" . $file, $musicDirectory . $file) )
 			{
@@ -1190,6 +1192,9 @@ function LoadUniverseFile()
 	while (!feof($f))
 	{
 		$line=fgets($f);
+		if ($line == "")
+			continue;
+
 		$entry = explode(",",$line,10);
 		$active = $entry[0];
 		$universe = $entry[1];
@@ -1449,7 +1454,7 @@ function AddPlayListEntry()
 {
 	$type = $_GET['type'];
 	$seqFile = $_GET['seqFile'];
-	$songFile = $_GET['songFile'];
+	$songFile = $_GET['mediaFile'];
 	$pause = $_GET['pause'];
 	$videoFile = $_GET['videoFile'];
 	$eventName = $_GET['eventName'];
@@ -2142,6 +2147,18 @@ function InstallPlugin()
 	EchoStatusXML('Success');
 }
 
+function SaveUSBDongle()
+{
+	$usbDonglePort = $_GET['port'];
+	check($usbDonglePort);
+
+	$usbDongleType = $_GET['type'];
+	check($usbDongleType);
+
+	WriteSettingToFile("USBDonglePort", $usbDonglePort);
+	WriteSettingToFile("USBDongleType", $usbDongleType);
+}
+
 function GetInterfaceInfo()
 {
 	$interface = $_GET['interface'];
@@ -2226,7 +2243,6 @@ function GetInterfaceInfo()
 
    
 	echo $doc->saveHTML();
-
 }
 
 ?>
