@@ -286,6 +286,8 @@ int parseArguments(int argc, char **argv)
 						logMask = VB_NONE;
 					} else if (!strcmp(s, "all")) {
 						logMask = VB_ALL;
+					} else if (!strcmp(s, "most")) {
+						logMask = VB_MOST;
 					} else if (!strcmp(s, "generic")) {
 						logMask |= VB_GENERIC;
 					} else if (!strcmp(s, "channelout")) {
