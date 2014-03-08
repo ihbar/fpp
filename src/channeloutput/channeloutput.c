@@ -12,6 +12,7 @@
 #include "USBDMXOpen.h"
 #include "USBDMXPro.h"
 #include "USBPixelnet.h"
+#include "USBRenard.h"
 
 
 
@@ -123,6 +124,21 @@ int InitializeChannelOutputs(void) {
 		}
 	}
 
+	if ((getFPPmode() == PLAYER_MODE) &&
+		(USBRenardOutput.isConfigured()))
+	{
+		channelOutputs[i].startChannel = 0;
+		channelOutputs[i].output       = &USBRenardOutput;
+
+		if (USBRenardOutput.open(getUSBDonglePort(),
+			&channelOutputs[i].privData))
+		{
+			i++;
+		} else {
+			LogErr(VB_CHANNELOUT, "ERROR Opening USBRenard Channel Output\n");
+		}
+	}
+
 	channelOutputCount = i;
 
 	LoadChannelRemapData();
@@ -154,7 +170,7 @@ void DumpChannelData(char *channelData) {
  *
  */
 int SendChannelData(char *channelData) {
-	int i = 0;
+	int i = 0, maxChannels;
 	FPPChannelOutputInstance *inst;
 
 	RemapChannels(channelData);
@@ -163,10 +179,11 @@ int SendChannelData(char *channelData) {
 
 	for (i = 0; i < channelOutputCount; i++) {
 		inst = &channelOutputs[i];
+		maxChannels = inst->output->maxChannels(inst->privData);
 		inst->output->send(
 			inst->privData,
 			channelData + inst->startChannel,
-			inst->output->maxChannels < (FPPD_MAX_CHANNELS - inst->startChannel) ? inst->output->maxChannels : (FPPD_MAX_CHANNELS - inst->startChannel));
+			maxChannels < (FPPD_MAX_CHANNELS - inst->startChannel) ? maxChannels : (FPPD_MAX_CHANNELS - inst->startChannel));
 	}
 
 	channelOutputFrame++;
