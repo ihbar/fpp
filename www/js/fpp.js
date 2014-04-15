@@ -1040,7 +1040,8 @@ function PopulatePlayListEntries(playList,reloadFile,selectedRow)
 															"</tr>";
 															
 									$('#tblSchedule').append(tableRow);
-									$('.time').timeEntry({show24Hours: true, showSeconds: true,spinnerImage: ''});
+									$('.time').timepicker({'timeFormat': 'H:i:s'});
+
 							}
 					}
 				}
