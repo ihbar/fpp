@@ -1,6 +1,6 @@
 CC := gcc
 
-TARGETS = fpp fppd
+TARGETS = fpp fppmm fppd
 
 INSTALL_PROGRAM = install -m 755 -p
 
@@ -10,12 +10,20 @@ OBJECTS_fpp = \
 LIBS_fpp = \
 	$(NULL)
 
+OBJECTS_fppmm = \
+	common.o \
+	fppmm.o \
+	$(NULL)
+LIBS_fppmm = \
+	$(NULL)
+
 OBJECTS_fppd = \
 	channeloutput/channeloutput.o \
 	channeloutput/channeloutputthread.o \
 	channeloutput/E131.o \
 	channeloutput/FPD.o \
 	channeloutput/serialutil.o \
+	channeloutput/SPIws2801.o \
 	channeloutput/USBDMXOpen.o \
 	channeloutput/USBDMXPro.o \
 	channeloutput/USBPixelnet.o \
@@ -31,6 +39,7 @@ OBJECTS_fppd = \
 	mediaoutput/mpg123.o \
 	mediaoutput/ogg123.o \
 	mediaoutput/omxplayer.o \
+	memorymap.o \
 	playList.o \
 	schedule.o \
 	sequence.o \
@@ -71,9 +80,13 @@ all: $(TARGETS)
 
 release: $(TARGETS)
 	-$(INSTALL_PROGRAM) fpp ../bin/fpp
+	-$(INSTALL_PROGRAM) fppmm ../bin/fppmm
 	-$(INSTALL_PROGRAM) fppd ../bin/fppd
 
 fpp: $(OBJECTS_fpp)
+	$(CC) $(CFLAGS_$@) $(OBJECTS_$@) $(LIBS_$@) $(LDFLAGS_$@) -o $@
+
+fppmm: $(OBJECTS_fppmm)
 	$(CC) $(CFLAGS_$@) $(OBJECTS_$@) $(LIBS_$@) $(LDFLAGS_$@) -o $@
 
 fppd: $(OBJECTS_fppd)
@@ -83,4 +96,4 @@ fppd: $(OBJECTS_fppd)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS_fpp) $(OBJECTS_fppd) fpp fppd
+	rm -f $(OBJECTS_fpp) $(OBJECTS_fppmm) $(OBJECTS_fppd) fpp fppmm fppd

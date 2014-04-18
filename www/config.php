@@ -4,24 +4,41 @@
 define('CONFIG_FILE', '/home/pi/media/settings');
 define('SUDO', 'sudo');
 
+// Settings array so we can stop making individual variables for each new setting
+$settings = array();
+// FIXME, need to convert other settings below to use this array
+$settings['fppMode'] = "player";
+
+// Helper function for accessing the global settings array
+function GetSettingValue($setting) {
+	global $settings;
+
+	if (isset($settings[$setting]))
+		return $settings[$setting];
+
+	return;  // FIXME, should we do this or return something else
+}
+
 // Set some defaults
 $fppMode = "player";
 $fppDir = dirname(dirname(__FILE__));
 $settingsFile = CONFIG_FILE;
-$mediaDirectory = "/home/pi/media";
-$musicDirectory = "/home/pi/media/music";
-$sequenceDirectory = "/home/pi/media/sequences";
-$playlistDirectory = "/home/pi/media/playlists";
-$eventDirectory = "/home/pi/media/events";
-$videoDirectory = "/home/pi/media/videos";
-$effectDirectory = "/home/pi/media/effects";
-$scriptDirectory = "/home/pi/media/scripts";
-$logDirectory = "/home/pi/media/logs";
-$pluginDirectory = "/opt/fpp/plugins";
-$universeFile = "/home/pi/media/universes";
-$pixelnetFile = "/home/pi/media/pixelnetDMX";
-$scheduleFile = "/home/pi/media/schedule";
-$bytesFile = "/home/pi/media/bytesReceived";
+$mediaDirectory    = "/home/pi/media/";
+$musicDirectory    = $mediaDirectory . "/music/";
+$sequenceDirectory = $mediaDirectory . "/sequences/";
+$playlistDirectory = $mediaDirectory . "/playlists/";
+$eventDirectory    = $mediaDirectory . "/events/";
+$videoDirectory    = $mediaDirectory . "/videos/";
+$effectDirectory   = $mediaDirectory . "/effects/";
+$scriptDirectory   = $mediaDirectory . "/scripts/";
+$logDirectory      = $mediaDirectory . "/logs/";
+$uploadDirectory   = $mediaDirectory . "/upload/";
+$universeFile      = $mediaDirectory . "/universes";
+$pixelnetFile      = $mediaDirectory . "/pixelnetDMX";
+$scheduleFile      = $mediaDirectory . "/schedule";
+$bytesFile         = $mediaDirectory . "/bytesReceived";
+$remapFile         = $mediaDirectory . "/channelremap";
+$pluginDirectory   = $mediaDirectory . "/plugins";
 $volume = 0;
 
 if (defined('debug'))
@@ -38,12 +55,14 @@ if (defined('debug'))
 	error_log("effects: $effectDirectory");
 	error_log("scripts: $scriptDirectory");
 	error_log("logs: $logDirectory");
-	error_log("plugins: $pluginDirectory");
+	error_log("uploads: $uploadDirectory");
 	error_log("universe: $universeFile");
 	error_log("pixelnet: $pixelnetFile");
 	error_log("schedule: $scheduleFile");
 	error_log("bytes: $bytesFile");
 	error_log("volume: $volume");
+	error_log("remap: $remapFile");
+	error_log("plugins: $pluginDirectory");
 }
 
 $fd = @fopen(CONFIG_FILE, "r");
@@ -55,6 +74,7 @@ if ( ! $fd )
 
 do
 {
+	global $settings;
 	global $fppMode, $volume, $settingsFile;
 	global $mediaDirectory, $musicDirectory, $sequenceDirectory, $playlistDirectory;
 	global $eventDirectory, $videoDirectory, $scriptDirectory, $logDirectory;
@@ -70,7 +90,21 @@ do
 		continue;
 	}
 
-	switch (trim($split[0]))
+	$key   = trim($split[0]);
+	$value = trim($split[1]);
+
+	if (trim($split[0]) != "") {
+		// If we have a Directory setting that doesn't
+		// end in a slash, then add one
+		if ((preg_match("/Directory$/", $key)) &&
+			(!preg_match("/\/$/", $value))) {
+			$value .= "/";
+		}
+
+		$settings[$key] = $value;
+	}
+
+	switch ($key)
 	{
 		case "fppMode":
 			$fppMode = trim($split[1]);
@@ -134,6 +168,8 @@ putenv("MEDIADIR=$mediaDirectory");
 putenv("LOGDIR=$logDirectory");
 putenv("SETTINGSFILE=$settingsFile");
 
+$settings['channelOutputsFile'] = $mediaDirectory . "/channeloutputs";
+
 if (defined('debug'))
 {
 	error_log("SET:");
@@ -148,12 +184,29 @@ if (defined('debug'))
 	error_log("effects: $effectDirectory");
 	error_log("scripts: $scriptDirectory");
 	error_log("logs: $logDirectory");
-	error_log("plugins: $pluginDirectory");
+	error_log("uploads: $uploadDirectory");
 	error_log("universe: $universeFile");
 	error_log("pixelnet: $pixelnetFile");
 	error_log("schedule: $scheduleFile");
 	error_log("bytes: $bytesFile");
 	error_log("volume: $volume");
+	error_log("remap: $remapFile");
+	error_log("plugins: $pluginDirectory");
 }
 
+// $skipJSsettings is only set in fppjson.php and fppxml.php
+// to prevent this JavaScript from being printed
+if (!isset($skipJSsettings)) {
 ?>
+<script type="text/javascript">
+	var settings = new Array();
+<?
+	foreach ($settings as $key => $value) {
+		printf("	settings['%s'] = \"%s\";\n", $key, $value);
+	}
+?>
+</script>
+<?
+}
+?>
+

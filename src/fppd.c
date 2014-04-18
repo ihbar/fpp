@@ -1,4 +1,5 @@
 #include "channeloutput/channeloutput.h"
+#include "channeloutput/channeloutputthread.h"
 #include "command.h"
 #include "e131bridge.h"
 #include "effects.h"
@@ -6,7 +7,7 @@
 #include "fppd.h"
 #include "log.h"
 #include "mediaoutput/mediaoutput.h"
-//#include "memorymap.h"
+#include "memorymap.h"
 #include "playList.h"
 #include "schedule.h"
 #include "sequence.h"
@@ -48,26 +49,26 @@ int main(int argc, char *argv[])
 
 	InitEffects();
 
-//	InitializeSequenceDataMemoryMap();
+	InitializeChannelDataMemoryMap();
 
 	if (getFPPmode() == PLAYER_MODE)
 	{
 		SendBlankingData();
 
-		LogInfo(VB_GENERIC, "Starting Player Process\n");
+		LogInfo(VB_GENERAL, "Starting Player Process\n");
 		PlayerProcess();
 	}
 	else if (getFPPmode() == BRIDGE_MODE)
 	{
-		LogInfo(VB_GENERIC, "Starting Bridge Process\n");
+		LogInfo(VB_GENERAL, "Starting Bridge Process\n");
 		Bridge_Process();
 	}
 	else
 	{
-		LogErr(VB_GENERIC, "Invalid mode, quitting\n");
+		LogErr(VB_GENERAL, "Invalid mode, quitting\n");
 	}
 
-//	CloseSequenceDataMemoryMap();
+	CloseChannelDataMemoryMap();
 
 	CloseEffects();
 
@@ -113,9 +114,14 @@ void PlayerProcess(void)
       default:
         break;
     }
+
+	// Check to see if we need to start up the output thread.
+	// FIXME, possibly trigger this via a fpp command to fppd
+	if (UsingMemoryMapInput() && !ChannelOutputThreadIsRunning())
+		StartChannelOutputThread();
   }
 
-  LogInfo(VB_GENERIC, "Main Player Process Loop complete, shutting down.\n");
+  LogInfo(VB_GENERAL, "Main Player Process Loop complete, shutting down.\n");
 
   CleanupMediaOutput();
 }

@@ -79,8 +79,8 @@ if ( $handle )
       </li>
       <li id='outputMenu'><a href="#">Output Setup</a>
         <ul>
-          <li><a href="universes.php">E1.31 Universes</a></li>
-          <li><a href="pixelnetdmx.php">FPD - Pixelnet/DMX</a></li>
+          <li><a href="channeloutputs.php">Channel Outputs</a></li>
+          <li><a href="channelremaps.php">Remap Channels</a></li>
 <?php
 $handle = opendir($pluginDirectory);
 if ( $handle )
@@ -100,12 +100,17 @@ if ( $handle )
 <? if ($kernel_version != "3.6.11-atsw-rtc+") { ?>
           <li><a href="usbdongle.php">USB Dongle</a></li>
 <? } ?>
+<!-- old screens
+          <li><a href="universes.php">E1.31 Universes</a></li>
+          <li><a href="pixelnetdmx.php">FPD - Pixelnet/DMX</a></li>
+          <li><a href="usbdongle.php">USB Dongle</a></li>
+-->
+          <!-- <li><a href="rds.php">Radio RDS</a></li> -->
         </ul>
       </li>
       <li><a href="#">Help</a>
         <ul>
           <li><a href="http://falconchristmas.com/wiki/index.php/Falcon_FPP" target="_blank">Wiki/Help</a></li>
-          <li><a href="about.php">About</a></li>
 <?php
 $handle = opendir($pluginDirectory);
 if ( $handle )
@@ -122,6 +127,8 @@ if ( $handle )
 	}
 }
 ?>
+          <li><a href="about.php">About</a></li>
+          <li><a href="credits.php">Credits</a></li>
         </ul>
       </li>
     </ul>

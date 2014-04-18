@@ -18,6 +18,7 @@ typedef struct usbRenardPrivData {
 	char *outputData;
 	int  fd;
 	int  maxChannels;
+	int  speed;
 } USBRenardPrivData;
 
 // Assume clocks are accurate to 1%, so insert a pad byte every 100 bytes.
@@ -37,6 +38,7 @@ void USBRenard_Dump(USBRenardPrivData *privData) {
 	LogDebug(VB_CHANNELOUT, "    filename   : %s\n", privData->filename);
 	LogDebug(VB_CHANNELOUT, "    fd         : %d\n", privData->fd);
 	LogDebug(VB_CHANNELOUT, "    maxChannels: %i\n", privData->maxChannels);
+	LogDebug(VB_CHANNELOUT, "    speed      : %d\n", privData->speed);
 }
 
 /*
@@ -56,13 +58,53 @@ int USBRenard_Open(char *configStr, void **privDataPtr) {
 	bzero(privData, sizeof(USBRenardPrivData));
 	privData->fd = -1;
 
+	char deviceName[32];
+	char *s = strtok(configStr, ";");
+
+	strcpy(deviceName, "UNKNOWN");
+
+	while (s) {
+		char tmp[128];
+		char *div = NULL;
+
+		strcpy(tmp, s);
+		div = strchr(tmp, '=');
+
+		if (div) {
+			*div = '\0';
+			div++;
+
+			if (!strcmp(tmp, "device")) {
+				LogDebug(VB_CHANNELOUT, "Using %s for Renard output\n", div);
+				strcpy(deviceName, div);
+			} else if (!strcmp(tmp, "renardspeed")) {
+				privData->speed = strtoll(div, NULL, 10);
+				if (privData->speed) {
+					LogDebug(VB_CHANNELOUT, "Sending Renard at %d speed\n", privData->speed);
+				} else {
+					privData->speed = 57600;
+					LogWarn(VB_CHANNELOUT,
+						"Unable to parse Renard speed, falling back to %d\n", privData->speed);
+				}
+			}
+		}
+		s = strtok(NULL, ",");
+	}
+
+	if (!strcmp(deviceName, "UNKNOWN"))
+	{
+		LogErr(VB_CHANNELOUT, "Invalid Config Str: %s\n", configStr);
+		free(privData);
+		return 0;
+	}
+
 	strcpy(privData->filename, "/dev/");
-	strcat(privData->filename, configStr);
+	strcat(privData->filename, deviceName);
 
 	LogInfo(VB_CHANNELOUT, "Opening %s for Renard output\n",
 		privData->filename);
 
-	privData->fd = SerialOpen(privData->filename, atoi(getUSBDongleBaud()), "8N1");
+	privData->fd = SerialOpen(privData->filename, privData->speed, "8N1");
 	if (privData->fd < 0)
 	{
 		LogErr(VB_CHANNELOUT, "Error %d opening %s: %s\n",
@@ -207,18 +249,22 @@ int USBRenard_MaxChannels(void *data)
 	
 	char *baud = getUSBDongleBaud();
 
-	if ( strcmp(baud, "460800") == 0 )
-		privData->maxChannels = 2292;
-	else if ( strcmp(baud, "230400") == 0 )
-		privData->maxChannels = 1146;
-	else if ( strcmp(baud, "115200") == 0 )
-		privData->maxChannels = 574;
-	else if ( strcmp(baud, "57600") == 0 )
-		privData->maxChannels = 286;
-	else if ( strcmp(baud, "38400") == 0 )
-		privData->maxChannels = 190;
-	else if ( strcmp(baud, "19200") == 0 )
-		privData->maxChannels = 94;
+	switch (privData->speed) {
+		case 921600:	privData->maxChannels = 4584;
+						break;
+		case 460800:	privData->maxChannels = 2292;
+						break;
+		case 230400:	privData->maxChannels = 1146;
+						break;
+		case 115200:	privData->maxChannels = 574;
+						break;
+		case  57600:	privData->maxChannels = 286;
+						break;
+		case  38400:	privData->maxChannels = 190;
+						break;
+		case  19200:	privData->maxChannels = 94;
+						break;
+	}
 	
 	return privData->maxChannels;
 }
@@ -232,6 +278,6 @@ FPPChannelOutput USBRenardOutput = {
 	.close        = USBRenard_Close,
 	.isConfigured = USBRenard_IsConfigured,
 	.isActive     = USBRenard_IsActive,
-	.send         = USBRenard_SendData //TODO, this is the guts of the thing here...
+	.send         = USBRenard_SendData
 	};
 

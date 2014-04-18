@@ -2,6 +2,7 @@
 #include "log.h"
 #include "command.h"
 #include "sequence.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -9,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -22,7 +24,6 @@ char response[256];
 
 void SendCommand(const char * com);
 void SetupDomainSocket(void);
-void SetMemoryMap(int channel, int value);
 
 socklen_t address_length;
 
@@ -97,75 +98,31 @@ int main (int argc, char *argv[])
         sprintf(command,"e,%s,1,",argv[2]);
       SendCommand(command);
     }
-    // Byte-bang a value into the channel data memory map
-//    else if((strncmp(argv[1],"-mm",3) == 0) &&  argc > 3)
-//    {
-//      SetMemoryMap(atoi(argv[2]), atoi(argv[3]));
-//    }
     // Trigger an event - example "fpp -t eventName"
     else if((strncmp(argv[1],"-t",2) == 0) &&  argc > 2)
     {
       sprintf(command,"t,%s,",argv[2]);
       SendCommand(command);
     }
-    // Set new log level - "fpp -ll info"   "fpp -l debug"
-    else if((strncmp(argv[1],"-ll",3) == 0) &&  argc > 2)
+    // Set new log level - "fpp --log-level info"   "fpp --log-level debug"
+    else if((strcmp(argv[1],"--log-level") == 0) &&  argc > 2)
     {
-	  int newLevel = 0;
-
-      if (!strcmp(argv[2], "warn")) {
-	  	newLevel = LOG_WARN;
-      } else if (!strcmp(argv[2], "debug")) {
-	  	newLevel = LOG_DEBUG;
-      } else {
-	  	newLevel = LOG_INFO;
-      }
-
-      sprintf(command,"LogLevel,%d,", newLevel);
+      sprintf(command,"LogLevel,%s,", argv[2]);
       SendCommand(command);
     }
-    // Set new log mask - "fpp -lm channel,mediaout"   "fpp -l all"
-    else if((strncmp(argv[1],"-lm",3) == 0) &&  argc > 2)
+    // Set new log mask - "fpp --log-mask channel,mediaout"   "fpp --log-mask all"
+    else if((strcmp(argv[1],"--log-mask") == 0) &&  argc > 2)
     {
-      int newMask = 0;
-      char *s = NULL;
+      char newMask[128];
+      strcpy(newMask, argv[2]);
 
-      s = strtok(argv[2], ",");
+      char *s = strchr(argv[2], ',');
       while (s) {
-        if (!strcmp(s, "none")) {
-          newMask = VB_NONE;
-        } else if (!strcmp(s, "all")) {
-          newMask = VB_ALL;
-        } else if (!strcmp(s, "generic")) {
-          newMask |= VB_GENERIC;
-        } else if (!strcmp(s, "channelout")) {
-          newMask |= VB_CHANNELOUT;
-        } else if (!strcmp(s, "channeldata")) {
-          newMask |= VB_CHANNELDATA;
-        } else if (!strcmp(s, "command")) {
-          newMask |= VB_COMMAND;
-        } else if (!strcmp(s, "e131bridge")) {
-          newMask |= VB_E131BRIDGE;
-        } else if (!strcmp(s, "effect")) {
-          newMask |= VB_EFFECT;
-        } else if (!strcmp(s, "event")) {
-          newMask |= VB_EVENT;
-        } else if (!strcmp(s, "mediaout")) {
-          newMask |= VB_MEDIAOUT;
-        } else if (!strcmp(s, "playlist")) {
-          newMask |= VB_PLAYLIST;
-        } else if (!strcmp(s, "schedule")) {
-          newMask |= VB_SCHEDULE;
-        } else if (!strcmp(s, "sequence")) {
-          newMask |= VB_SEQUENCE;
-        } else if (!strcmp(s, "setting")) {
-          newMask |= VB_SETTING;
-        }
-
-        s = strtok(NULL,",");
+        *s = ';';
+        s = strchr(s+1, ',');
       }
 
-      sprintf(command,"LogMask,%d,", newMask);
+      sprintf(command,"LogMask,%s,", newMask);
       SendCommand(command);
     }
     else
@@ -236,39 +193,5 @@ void SendCommand(const char * com)
  {
  	 printf("false");
  }
-}
-
-void SetMemoryMap(int channel, int value) {
-	char *data = NULL;
-	int fd = open("/tmp/FPPchannelData", O_RDWR);
-
-	if ((channel <= 0) ||
-		(channel > FPPD_MAX_CHANNELS)) {
-		printf( "ERROR, channel %d is not in range of 1-%d\n",
-			channel, FPPD_MAX_CHANNELS);
-		return;
-	}
-
-	if (fd < 0) {
-		printf( "ERROR opening memory mapped file /tmp/FPPchannelData: %s",
-			strerror(errno));
-		return;
-	}
-
-	data = (char *)mmap(0, FPPD_MAX_CHANNELS, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
-
-	if (!data) {
-		printf( "Unable to memory map file: %s\n", strerror(errno));
-		close(fd);
-		return;
-	}
-
-	data[channel - 1] = (char)value;
-
-	printf( "Set memory mapped channel %d to %d\n", channel, value);
-
-	munmap(data, FPPD_MAX_CHANNELS);
-
-	close(fd);
 }
 

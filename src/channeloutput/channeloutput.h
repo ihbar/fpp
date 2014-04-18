@@ -16,6 +16,7 @@ typedef struct fppChannelOutput {
 
 typedef struct fppChannelOutputInstance {
 	unsigned int      startChannel;
+	unsigned int      channelCount;
 	FPPChannelOutput *output;
 	void             *privData;
 } FPPChannelOutputInstance;
