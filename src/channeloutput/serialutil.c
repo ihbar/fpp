@@ -59,6 +59,7 @@ int SerialOpen(char *device, int baud, char *mode)
 {
 	int fd = 0;
 	struct termios tty;
+	int CtrlFlag;  // flag to reset RTS, DTR,...
 	speed_t adjustedBaud = SerialGetBaudRate(baud);
 
 	if (strlen(mode) != 3)
@@ -85,6 +86,11 @@ int SerialOpen(char *device, int baud, char *mode)
 		return -1;
 	}
 
+	/* Reset the RTS line */
+	CtrlFlag=TIOCM_RTS;
+	if (ioctl(fd, TIOCMBIC, &CtrlFlag ) < 0)
+		LogErr(VB_CHANNELOUT, "Error clearing RTS \n");		
+	
 	if (cfsetspeed(&tty, adjustedBaud) == -1)
 	{
 		LogErr(VB_CHANNELOUT, "Error setting port speed\n");
@@ -92,6 +98,9 @@ int SerialOpen(char *device, int baud, char *mode)
 		return -1;
 	}
 
+	
+	
+	
 	tty.c_cflag &= ~CSIZE;
 	switch (mode[0]) {
 		case '5':	tty.c_cflag |= CS5;
