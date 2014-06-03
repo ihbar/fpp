@@ -32,10 +32,17 @@ ${BINDIR}/config_dns
 
 WaitForDHCPIPs
 
+# Workaround for bug raspberry/linux #570 wrong volume when starting playback.
+# Playback of silence is done while updating the volume. Pause inserted between operation.
+aplay ${BINDIR}/silence_5sec.wav &
+
 amixer cset numid=3 1
+
 ORIGVOLUME=$(getSetting volume)
 VOLUME=$(expr ${ORIGVOLUME} / 2 + 50)
 amixer set PCM ${VOLUME}%
+sleep 6;
+
 
 # Let's check that our .asoundrc is as valid as we care about right now
 if [ ! -e /proc/asound/card$(sed -n '/card [0-9]*/p' /root/.asoundrc | head -n 1 | awk '{print $2}') ]; then
